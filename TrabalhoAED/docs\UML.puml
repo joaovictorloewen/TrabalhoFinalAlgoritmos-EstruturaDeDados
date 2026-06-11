@@ -1,0 +1,151 @@
+@startuml DiagramaPostoAtendimento
+title Diagrama de Classes - Posto de Atendimento Bancario (AED 2026/1)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty members
+
+' ===================== Pacote estruturas =====================
+package "aed.estruturas" {
+
+    class "No<T>" as No {
+        - valor : T
+        - proximo : No<T>
+        + getValor() : T
+        + setValor(T) : void
+        + getProximo() : No<T>
+        + setProximo(No<T>) : void
+    }
+
+    class "Fila<T>" as Fila {
+        - inicio : No<T>
+        - fim : No<T>
+        - tamanho : int
+        + enfileirar(T) : void
+        + desenfileirar() : T
+        + primeiro() : T
+        + estaVazia() : boolean
+        + tamanho() : int
+    }
+
+    class "Pilha<T>" as Pilha {
+        - topo : No<T>
+        - tamanho : int
+        + empilhar(T) : void
+        + desempilhar() : T
+        + topo() : T
+        + estaVazia() : boolean
+        + tamanho() : int
+        + paraLista() : ListaDinamica<T>
+    }
+
+    class "ListaDinamica<T>" as Lista {
+        - dados : Object[]
+        - tamanho : int
+        + adicionar(T) : void
+        + get(int) : T
+        + set(int, T) : void
+        + trocar(int, int) : void
+        + tamanho() : int
+        + estaVazia() : boolean
+    }
+
+    interface "Comparador<T>" as Comparador {
+        + comparar(T, T) : int
+    }
+
+    class Ordenacao <<utility>> {
+        + {static} quickSort(ListaDinamica<T>, Comparador<T>) : void
+        + {static} mergeSort(ListaDinamica<T>, Comparador<T>) : void
+    }
+}
+
+' ===================== Pacote modelo =====================
+package "aed.modelo" {
+
+    enum TipoCliente {
+        NORMAL
+        PRIORIDADE
+    }
+
+    enum TipoGuiche {
+        PREFERENCIAL
+        GERAL
+    }
+
+    class Relogio <<utility>> {
+        + {static} formatar(int) : String
+    }
+
+    class RegistroAtendimento {
+        - id : int
+        - tipo : TipoCliente
+        - horarioChegada : int
+        - tempoAtendimento : int
+        - horarioInicioAtendimento : int
+        - tempoEspera : int
+        - guicheAtendente : String
+        - atendido : boolean
+        + iniciarAtendimento(int, String) : void
+        + getHorarioFimAtendimento() : int
+        + isPrioritario() : boolean
+        + toString() : String
+    }
+
+    class Guiche {
+        - nome : String
+        - tipo : TipoGuiche
+        - totalAtendimentos : int
+        - totalNormais : int
+        - totalPrioritarios : int
+        - horarioLivre : int
+        - ultimoFoiPrioritario : boolean
+        + estaLivre(int) : boolean
+        + atender(RegistroAtendimento, int) : void
+    }
+}
+
+' ===================== Pacote simulacao =====================
+package "aed.simulacao" {
+
+    class PostoAtendimento {
+        - relogio : int
+        - proximoId : int
+        + adicionarCliente(TipoCliente, int) : RegistroAtendimento
+        + chamarProximo(Guiche) : RegistroAtendimento
+        + simularAtendimentoAutomatico(int, int) : void
+        + coletarAtendimentos() : ListaDinamica<RegistroAtendimento>
+        + gerarRelatorio() : String
+    }
+}
+
+' ===================== Pacote app =====================
+package "aed" {
+    class Main {
+        + {static} main(String[]) : void
+    }
+}
+
+' ===================== Relacionamentos =====================
+Fila o--> "0..*" No : encadeia
+Pilha o--> "0..*" No : encadeia
+Pilha ..> Lista : cria
+
+Ordenacao ..> Lista : ordena
+Ordenacao ..> Comparador : usa
+
+RegistroAtendimento --> TipoCliente
+RegistroAtendimento ..> Relogio : usa
+Guiche --> TipoGuiche
+Guiche *--> "1" Pilha : historico
+Guiche --> RegistroAtendimento : atende
+
+PostoAtendimento *--> "2" Fila : filaPrioridade / filaNormal
+PostoAtendimento *--> "3" Guiche : preferencial / geral1 / geral2
+PostoAtendimento ..> Ordenacao : usa
+PostoAtendimento ..> Comparador : implementa (anonima)
+PostoAtendimento ..> RegistroAtendimento : cria
+
+Main --> PostoAtendimento
+
+@enduml
